@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+
+var fs = require('fs')
+var cp = require('child_process')
+var commander = require('commander')
+var axios = require('axios')
+var log = require('../lib/log')
+var options = require('../lib/options')
+
+commander
+  .option('-m, --menus [menus]', '菜单数据源')
+  .option('-r, --router [router]', '路由文件路径')
+  .parse(process.argv)
+
+options
+  .get(commander)
+  .then(options => {
+    setPackageJson(options)
+  })
+
+/**
+ * 修改package.json
+ */
+var setPackageJson = function (options) {
+  
+  const path = 'package.json'
+  const indent = new Array(3).join(' ')
+  const menus = options.menus
+  const router = options.router
+
+  var jsonStr = fs.readFileSync(path, 'utf8')
+  var json = JSON.parse(jsonStr);
+  var scripts = json.scripts || {}
+
+  // 注入勾子
+  var hook = 'vpm init-router -r ' + router
+  var postinstall = scripts.postinstall
+  if(!postinstall) {
+    scripts.postinstall = hook
+  } else if (postinstall && postinstall.indexOf('vpm init-router') === -1) {
+    scripts.postinstall += postinstall + ' & ' + hook 
+  }
+  json.scripts = scripts;
+
+  // 注入依赖
+  var dependencies = json.dependencies || {};
+  menus
+    .filter(menu => menu.version)
+    .forEach(menu => {
+      var component = menu.component
+      var version = menu.version
+      if(dependencies[component]) {
+        log(component + '已重写至版本' + version)
+      }
+      dependencies[component] = version
+    })
+    json.dependencies = dependencies
+
+  fs.writeFileSync(path, JSON.stringify(json, null, indent));
+
+  // 安装
+  log('package.json重写完毕，开始安装依赖')
+  var time = setInterval(() => {
+    console.log('安装集成中，请稍候...')
+  }, 1000)
+  var begin = new Date()
+  cp.exec('npm install', (error, stout, sterr) => {
+    clearInterval(time)
+    log('安装耗时：' + (new Date() - begin))
+    log(stout)
+  })
+
+}
+

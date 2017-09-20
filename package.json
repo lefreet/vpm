@@ -1,0 +1,31 @@
+{
+  "name": "vpm",
+  "version": "1.0.0",
+  "description": "vue project manager",
+  "main": "index.js",
+  "bin": {
+    "vpm": "bin/vpm"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lefreet/vpm.git"
+  },
+  "keywords": [
+    "vue",
+    "project",
+    "integration"
+  ],
+  "author": "lefreet",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lefreet/vpm/issues"
+  },
+  "homepage": "https://github.com/lefreet/vpm#readme",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "commander": "^2.11.0"
+  }
+}

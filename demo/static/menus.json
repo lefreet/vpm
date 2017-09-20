@@ -1,0 +1,11 @@
+{
+  "data": [{
+    "name": "menu1",
+    "path": "/menu1",
+    "component": "../components/menu1.vue"
+  }, {
+    "name": "menu2",
+    "path": "/menu2",
+    "component": "../components/menu2.vue"
+  }]
+}

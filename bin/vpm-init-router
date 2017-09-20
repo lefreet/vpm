@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+
+var fs = require('fs')
+var commander = require('commander')
+var axios = require('axios')
+var log = require('../lib/log')
+var options = require('../lib/options')
+
+commander
+  .option('-m, --menus [menus]', '菜单数据源')
+  .option('-r, --router [router]', '路由文件路径')
+  .parse(process.argv)
+
+options
+  .get(commander)
+  .then(options => {
+    setRouter(options)
+    clearHook()
+  })
+
+/**
+ * 重写路由文件
+ * @return {[type]} [description]
+ */
+var setRouter = function () {
+
+  log('开始重写路由配置')
+
+  const indent = new Array(3).join(' ')
+
+  let json = options.json
+  let menus = options.menus
+  let path = options.router
+
+  var scriptStr = fs.readFileSync(path, 'utf8')
+  var routerStr = ''
+
+  routerStr += [
+    "import Vue from 'vue'",
+    "import Router from 'vue-router'\n",
+    "Vue.use(Router)\n",
+    "export default new Router({",
+    indent + "routes: [",
+    createRouterList(menus, indent),
+    indent + ']',
+    "})\n"
+  ].join('\n')
+
+  log('路由生成完毕，请查看' + path);
+
+  fs.writeFileSync(path, routerStr, 'utf8');
+
+}
+
+/**
+ * 路由部分拼接
+ * @param  {[type]} menus  [description]
+ * @param  {[type]} indent [description]
+ * @return {[type]}        [description]
+ */
+var createRouterList = function (menus, indent) {
+  var str = "";
+  menus.forEach(menu => {
+    str += [
+      indent, indent, "{\n",
+      indent, indent, indent, "path: '", menu.path, "',\n",
+      indent, indent, indent, "name: '", menu.name, "',\n",
+      indent, indent, indent, "component: resolve => require(['", menu.component, "'], resolve)\n",
+      indent, indent, "},\n",
+    ].join('')
+  })
+  return str.slice(0, -2);
+}
+
+/**
+ * 清除勾子，防止npm install导致的反复回调
+ * @return {[type]} [description]
+ */
+var clearHook = function () {
+
+}

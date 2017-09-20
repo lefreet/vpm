@@ -11,7 +11,7 @@ $ npm install vpm -g
 
 # 使用
 
-### 根据菜单配置，安装，生成路由
+### 1.根据菜单配置，安装，生成路由
 
 基本命令：
 
@@ -41,13 +41,13 @@ $ vpm install --help
 }
 ```
 
-#### 1. 从接口请求 
+#### a. 从接口请求 
 
 ```bash
 $ npm install -m http://127.0.0.1:8080/static/menus -r src/router/index.js
 ```
 
-### 2. 配置参数可以写在package.json的`vpm`节点上
+#### b. 配置参数可以写在package.json的`vpm`节点上
 
 ```js
 {
@@ -61,7 +61,7 @@ $ npm install -m http://127.0.0.1:8080/static/menus -r src/router/index.js
 $ npm install
 ```
 
-### 3. 具体示例
+#### c. 具体示例
 下载源码中的demo目录，在该目录下执行
 
 ```bash

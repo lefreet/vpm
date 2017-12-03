@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+
+var fs = require('fs')
+var options = require('../lib/options')
+var commander = require('commander')
+
+commander
+  .option('-m, --menus [menus]', '菜单数据源')
+  .parse(process.argv)
+
+options
+  .get(commander)
+  .then(options => {
+    createJsonFiles(options)
+  })
+
+
+
+var createJsonFiles = function (options) {
+  let menus = options.menus
+  var count = 0
+
+  if (!fs.existsSync('Json')) {
+    fs.mkdir('Json')
+  }
+
+  menus.forEach(menu => {
+    var url = menu.navigateuri || ''
+    var fileName = 'Json/' + url.split('/').join('-') + '.json'
+    if (url) {
+      if (fs.existsSync(fileName)) {
+        console.log('#' + fileName + '已存在')
+      } else {
+        console.log('*' + fileName + '已创建')
+        fs.writeFileSync(fileName, '{}')
+        count++
+      }
+    }
+  })
+  console.log('新增配置文件' + count + '个')
+}

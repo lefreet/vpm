@@ -3,7 +3,6 @@
 var fs = require('fs')
 var cp = require('child_process')
 var commander = require('commander')
-var axios = require('axios')
 var log = require('../lib/log')
 var options = require('../lib/options')
 

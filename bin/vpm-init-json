@@ -3,39 +3,111 @@
 var fs = require('fs')
 var options = require('../lib/options')
 var commander = require('commander')
+var glob = require('glob')
 
 commander
   .option('-m, --menus [menus]', '菜单数据源')
+  .option('-k, --keys [keys]', '生成指定菜单')
   .parse(process.argv)
 
 options
   .get(commander)
   .then(options => {
-    createJsonFiles(options)
+    let keys = (commander.keys && commander.keys.split(',')) || undefined
+    createJsonBaseFiles(options)
+    createJsonFiles(options, keys)
   })
 
+// 判断菜单是否挂载vue组件
+var isComponent = function (menu) {
+  return menu.module_params && 
+        menu.module_params.trim() && 
+        menu.module_params.indexOf('/') === -1
+}
 
+// 创建基础配置
+// url: ywxt/fffxxy/4/hsbs/hsqd
+var createJsonBaseFiles = function (options) {
+  let menus = options.menus.filter(menu => isComponent(menu))
+  let dir = 'json-base'
+  let count = 0
 
-var createJsonFiles = function (options) {
-  let menus = options.menus
-  var count = 0
-
-  if (!fs.existsSync('Json')) {
-    fs.mkdir('Json')
+  if (!fs.existsSync(dir)) {
+    fs.writeFileSync(dir)
   }
 
   menus.forEach(menu => {
-    var url = menu.navigateuri || ''
-    var fileName = 'Json/' + url.split('/').join('-') + '.json'
-    if (url) {
+    let url = menu.navigateuri || ''
+    let routeNodes = url.split('/')
+    let node0 = routeNodes[0]
+    let node3 = routeNodes[3]
+    let node4 = routeNodes[4]
+
+    // 只针对业务协同和厅内流转，执行反馈和协同会商，需要手动配置
+    if (
+      (node0 === 'ywxt' || node0 === 'tnlz') && 
+      node3 && 
+      node4
+    ) {
+      let fileName = dir + '/' + node3 + '-' + node4 + '.json'
       if (fs.existsSync(fileName)) {
-        console.log('#' + fileName + '已存在')
+        console.log('#base: ' + fileName + '已存在，已忽略')
       } else {
-        console.log('*' + fileName + '已创建')
-        fs.writeFileSync(fileName, '{}')
+        console.log('*base: ' + fileName + '已创建')
         count++
+        fs.writeFileSync(fileName, '{}')
       }
     }
   })
-  console.log('新增配置文件' + count + '个')
+
+  console.log([
+    '获取挂载vue组件的菜单数据',
+    menus.length,
+    '条，创建基础配置文件',
+    count,
+    '个'
+  ].join(''))
 }
+
+var createJsonFiles = function (options, keys) {
+  let menus = options.menus.filter(menu => isComponent(menu))
+  let count = 0
+  let rowStrCache = {}
+
+  // 先把目录清空
+  let jsonFiles = glob.sync('json/*')
+  jsonFiles.forEach(file => {
+    fs.unlinkSync(file)
+  })
+
+  // 读所有基础配置内容缓存
+  let jsonBaseFiles = glob.sync('json-base/*.json')
+  jsonBaseFiles.forEach(file => {
+    let fileName = file.replace('json-base/', '').replace('.json', '')
+    rowStrCache[fileName] = fs.readFileSync(file, 'utf8')
+  })
+
+  // 将基础配置内容赋给具体菜单配置
+  menus.forEach(menu => {
+    let url = menu.navigateuri || ''
+    let routeNodes = url.split('/')
+    let node0 = routeNodes[0]
+    let node3 = routeNodes[3]
+    let node4 = routeNodes[4]
+
+    if (url && isComponent(menu)) {
+      let fileName = 'json/' + routeNodes.join('-') + '.json'
+      let key = node3 + '-' + node4
+      if ((keys !== undefined && keys.indexOf(key) !== -1) || keys === undefined) {
+        console.log(key + ' >>>>>>> ' + fileName)
+        count++
+        fs.writeFileSync(fileName, rowStrCache[key] || '{}')
+      }
+    }
+
+  })
+
+  console.log('生成菜单配置' + count + '个')
+
+}
+

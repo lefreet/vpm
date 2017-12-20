@@ -17,6 +17,7 @@
     "router": "src/router/index.js"
   },
   "dependencies": {
+    "moment": "^2.20.1",
     "vue": "^2.4.2",
     "vue-router": "^2.7.0"
   },
